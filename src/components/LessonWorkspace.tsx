@@ -8,7 +8,7 @@ import {
   ChevronLeft,
 } from 'lucide-react';
 import { Lesson } from '../types/curriculum';
-import { SUBJECTS } from '../data/tunisianCurriculum';
+import { GRADES, SUBJECTS } from '../data/tunisianCurriculum';
 import { SimulationStage } from './simulations/SimulationStage';
 import { ExerciseEngine } from './ExerciseEngine';
 
@@ -31,6 +31,7 @@ export const LessonWorkspace: React.FC<LessonWorkspaceProps> = ({
   const [activeStepIdx, setActiveStepIdx] = useState(0);
 
   const subject = SUBJECTS[lesson.subjectId];
+  const gradeMeta = GRADES.find((g) => g.grade === lesson.grade);
   const currentStep = lesson.steps[activeStepIdx];
   const isStepDone = completedStepIndices.includes(activeStepIdx);
 
@@ -57,6 +58,12 @@ export const LessonWorkspace: React.FC<LessonWorkspaceProps> = ({
           </button>
           <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
             <span className={`font-semibold ${subject.accentText}`}>{subject.name}</span>
+            {gradeMeta && (
+              <>
+                <span aria-hidden="true">·</span>
+                <span className="font-medium text-slate-700">{gradeMeta.label}</span>
+              </>
+            )}
             <span aria-hidden="true">·</span>
             <span>{lesson.trimester}</span>
             <span aria-hidden="true">·</span>

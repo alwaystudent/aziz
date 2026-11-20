@@ -8,56 +8,79 @@ import {
   TrendingUp,
   ArrowLeft,
   Award,
+  CalendarHeart,
 } from 'lucide-react';
-import { BADGES, LESSONS, LEVELS, SUBJECTS } from '../data/tunisianCurriculum';
-import { Lesson, LevelInfo, StudentProgress, SubjectId } from '../types/curriculum';
+import { BADGES, GRADES, LESSONS, LEVELS, SUBJECTS } from '../data/tunisianCurriculum';
+import { GradeLevel, Lesson, LevelInfo, StudentProgress, SubjectId } from '../types/curriculum';
 import { BadgeMedallion } from './BadgeMedallion';
 
 interface ProgressDashboardProps {
   progress: StudentProgress;
+  selectedGrade: GradeLevel;
+  onSelectGrade: (grade: GradeLevel) => void;
   completedCount: number;
   totalLessons: number;
+  overallCompletedCount: number;
+  overallTotalLessons: number;
   overallMasteryPercent: number;
-  subjectStats: (id: SubjectId) => {
+  subjectStats: (id: SubjectId, grade?: GradeLevel) => {
     totalLessons: number;
     completedLessons: number;
     accuracy: number;
     completionPercent: number;
   };
+  gradeStats: (grade: GradeLevel) => {
+    totalLessons: number;
+    completedLessons: number;
+    completionPercent: number;
+  };
   earnedBadges: string[];
   levelInfo: LevelInfo;
   onEquipBadge: (badgeId: string) => void;
-  onUpdateProfile: (name: string, governorate: string) => void;
+  onUpdateProfile: (name: string, governorate: string, grade: GradeLevel) => void;
   onResetProgress: () => void;
+  onSimulateAbsence: () => void;
   onSelectLesson: (lesson: Lesson) => void;
 }
 
 export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
   progress,
+  selectedGrade,
+  onSelectGrade,
   completedCount,
   totalLessons,
+  overallCompletedCount,
+  overallTotalLessons,
   overallMasteryPercent,
   subjectStats,
+  gradeStats,
   earnedBadges,
   levelInfo,
   onEquipBadge,
   onUpdateProfile,
   onResetProgress,
+  onSimulateAbsence,
   onSelectLesson,
 }) => {
-  const [editingProfile, setEditingProfile] = useState(false);
+  const [editingProfile, setEditingProfile] = useState(!progress.studentName.trim());
   const [nameInput, setNameInput] = useState(progress.studentName);
   const [govInput, setGovInput] = useState(progress.schoolGovernorate);
+  const [gradeInput, setGradeInput] = useState<GradeLevel>(selectedGrade);
   const [confirmReset, setConfirmReset] = useState(false);
+
+  const activeGradeMeta = GRADES.find((g) => g.grade === selectedGrade) ?? GRADES[2];
 
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
-    onUpdateProfile(nameInput, govInput);
+    if (!nameInput.trim() && !progress.studentName.trim()) return;
+    onUpdateProfile(nameInput, govInput, gradeInput);
     setEditingProfile(false);
   };
 
   const nextRecommendedLesson =
-    LESSONS.find((l) => !progress.completedLessons[l.id]) ?? LESSONS[0];
+    LESSONS.find((l) => l.grade === selectedGrade && !progress.completedLessons[l.id]) ??
+    LESSONS.find((l) => !progress.completedLessons[l.id]) ??
+    LESSONS[0];
 
   const equippedBadge = BADGES.find((b) => b.id === progress.equippedBadgeId) ?? null;
 
@@ -75,8 +98,7 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
 
   return (
     <section className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-8">
-      {/* Header & Student Profile + Level Progression Card */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-6">
+      <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-6 shadow-xs">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="flex items-start gap-4">
             {equippedBadge ? (
@@ -89,30 +111,31 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
 
             <div className="space-y-1.5">
               <div className="text-xs font-semibold text-sky-700">
-                بطاقة التحفيز ومتابعة التقدّم للتلميذ والوليّ
+                بطاقة التلميذ · المتابعة والتحفيز للطفل والوليّ
               </div>
 
               {!editingProfile ? (
                 <div className="space-y-1">
                   <div className="flex flex-wrap items-center gap-3">
                     <h1 className="text-2xl sm:text-3xl font-display font-bold text-slate-900">
-                      {progress.studentName}
+                      {progress.studentName.trim() || 'أدخل اسم التلميذ'}
                     </h1>
                     <button
                       type="button"
                       onClick={() => {
                         setNameInput(progress.studentName);
                         setGovInput(progress.schoolGovernorate);
+                        setGradeInput(selectedGrade);
                         setEditingProfile(true);
                       }}
                       className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 hover:text-sky-700 underline underline-offset-4 cursor-pointer"
                     >
                       <Edit3 className="w-3.5 h-3.5" aria-hidden="true" />
-                      تعديل الاسم
+                      {progress.studentName.trim() ? 'تعديل الملف والسنة' : 'إدخال اسم التلميذ'}
                     </button>
                   </div>
                   <div className="text-sm text-slate-600">
-                    {progress.schoolGovernorate} · المستوى {levelInfo.level}:{' '}
+                    {progress.schoolGovernorate} · {activeGradeMeta.label} · المستوى {levelInfo.level}:{' '}
                     <strong className="text-slate-900">{levelInfo.title}</strong>
                     {equippedBadge && (
                       <>
@@ -132,11 +155,13 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
                       type="text"
                       value={nameInput}
                       onChange={(e) => setNameInput(e.target.value)}
-                      className="px-3 py-1.5 text-sm border border-slate-300 rounded-lg bg-slate-50"
+                      placeholder="اكتب اسم الطفل هنا..."
+                      required={!progress.studentName.trim()}
+                      className="px-3 py-1.5 text-sm border border-slate-300 rounded-lg bg-slate-50 focus:bg-white focus:outline-none focus:border-sky-500"
                     />
                   </label>
                   <label className="space-y-1">
-                    <span className="block text-xs font-medium text-slate-600">الولاية / القسم</span>
+                    <span className="block text-xs font-medium text-slate-600">الولاية</span>
                     <input
                       type="text"
                       value={govInput}
@@ -144,19 +169,35 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
                       className="px-3 py-1.5 text-sm border border-slate-300 rounded-lg bg-slate-50"
                     />
                   </label>
+                  <label className="space-y-1">
+                    <span className="block text-xs font-medium text-slate-600">السنة الدراسية</span>
+                    <select
+                      value={gradeInput}
+                      onChange={(e) => setGradeInput(Number(e.target.value) as GradeLevel)}
+                      className="px-3 py-1.5 text-sm border border-slate-300 rounded-lg bg-slate-50 cursor-pointer"
+                    >
+                      {GRADES.map((g) => (
+                        <option key={g.grade} value={g.grade}>
+                          {g.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
                   <button
                     type="submit"
                     className="px-4 py-1.5 text-xs font-semibold bg-sky-600 text-white rounded-lg hover:bg-sky-700 cursor-pointer"
                   >
-                    حفظ
+                    حفظ في البطاقة
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setEditingProfile(false)}
-                    className="px-3 py-1.5 text-xs font-semibold text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 cursor-pointer"
-                  >
-                    إلغاء
-                  </button>
+                  {progress.studentName.trim() && (
+                    <button
+                      type="button"
+                      onClick={() => setEditingProfile(false)}
+                      className="px-3 py-1.5 text-xs font-semibold text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 cursor-pointer"
+                    >
+                      إلغاء
+                    </button>
+                  )}
                 </form>
               )}
             </div>
@@ -177,9 +218,15 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
               </div>
             </div>
             <div>
-              <div className="text-xs text-slate-500">الدروس المكتملة</div>
+              <div className="text-xs text-slate-500">دروس {activeGradeMeta.shortLabel}</div>
               <div className="mt-1 text-xl font-mono font-bold text-slate-900 tabular-nums">
                 {completedCount} / {totalLessons}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs text-slate-500">إجمالي المنصة</div>
+              <div className="mt-1 text-xl font-mono font-bold text-sky-700 tabular-nums">
+                {overallCompletedCount} / {overallTotalLessons}
               </div>
             </div>
             <div>
@@ -192,7 +239,6 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
           </div>
         </div>
 
-        {/* Level Roadmap Bar */}
         <div className="pt-4 border-t border-slate-100 space-y-2.5">
           <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
             <span className="font-semibold text-slate-800">
@@ -200,13 +246,15 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
             </span>
             <span className="font-mono text-slate-600 tabular-nums">
               {levelInfo.nextMinPoints !== null
-                ? `${progress.points} / ${levelInfo.nextMinPoints} نقطة للمستوى ${levelInfo.level + 1}`
+                ? `${progress.points} / ${levelInfo.nextMinPoints} نقطة للمستوى ${
+                    levelInfo.level + 1
+                  }`
                 : `${progress.points} نقطة · القمة!`}
             </span>
           </div>
           <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
             <div
-              className="h-full bg-amber-500 transition-all duration-300"
+              className="h-full bg-gradient-to-l from-amber-500 to-sky-500 transition-all duration-300"
               style={{ width: `${levelPercent}%` }}
             />
           </div>
@@ -228,17 +276,113 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
         </div>
       </div>
 
-      {/* Virtual Badges Vault (خزانة الأوسمة الافتراضية) */}
+      {/* Multi-Grade Overview Strip (Grades 3 to 6) */}
       <div className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <h2 className="text-xl font-display font-bold text-slate-900">
-              خزانة الأوسمة الافتراضية ({earnedBadges.length} من {BADGES.length})
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-600">
-              يُفتح كل وسام تلقائياً عند إتمام الدروس والتمارين بنجاح، ويمنحك نقاطاً إضافية! يمكنك اختيار وسامك المفضّل لعرضه بجانب اسمك.
-            </p>
-          </div>
+          <h2 className="text-xl font-display font-bold text-slate-900">
+            التقدّم عبر السنوات الدراسية (من الثالثة إلى السادسة)
+          </h2>
+          <span className="text-xs text-slate-500">
+            اضغط على أي سنة لعرض تفصيل موادها الأساسية
+          </span>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {GRADES.map((g) => {
+            const gStats = gradeStats(g.grade);
+            const active = g.grade === selectedGrade;
+            return (
+              <button
+                key={g.grade}
+                type="button"
+                onClick={() => onSelectGrade(g.grade)}
+                className={`card-interactive text-right rounded-2xl border p-4 space-y-3 transition-colors cursor-pointer ${
+                  active
+                    ? 'bg-sky-50/70 border-sky-400'
+                    : 'bg-white border-slate-200 hover:border-sky-300'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-sm font-display font-bold text-slate-900">
+                    {g.label}
+                  </span>
+                  <span className="font-mono text-sm font-bold text-sky-700 tabular-nums">
+                    {gStats.completionPercent}%
+                  </span>
+                </div>
+                <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-sky-600 transition-all duration-300"
+                    style={{ width: `${gStats.completionPercent}%` }}
+                  />
+                </div>
+                <div className="text-xs text-slate-600 font-mono tabular-nums">
+                  الدروس المنجزة: {gStats.completedLessons} / {gStats.totalLessons}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-display font-bold text-slate-900">
+            تقدّم التلميذ في مواد {activeGradeMeta.label}
+          </h2>
+          <span className="text-xs font-mono font-bold text-sky-700 tabular-nums">
+            إتقان {activeGradeMeta.shortLabel}: {overallMasteryPercent}%
+          </span>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {(['math', 'science', 'arabic', 'french'] as SubjectId[]).map((sid) => {
+            const meta = SUBJECTS[sid];
+            const stats = subjectStats(sid, selectedGrade);
+            return (
+              <div
+                key={sid}
+                className="card-interactive bg-white border border-slate-200 rounded-2xl p-5 space-y-4"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className={`text-base font-display font-bold ${meta.accentText}`}>
+                      {meta.name}
+                    </div>
+                    <div className="text-xs text-slate-500" dir="ltr">
+                      {meta.frenchName}
+                    </div>
+                  </div>
+                  <span className="font-mono text-lg font-bold text-slate-900 tabular-nums">
+                    {stats.completionPercent}%
+                  </span>
+                </div>
+
+                <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full ${meta.barColor} transition-all duration-300`}
+                    style={{ width: `${stats.completionPercent}%` }}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between text-xs text-slate-600 font-mono tabular-nums">
+                  <span>
+                    الدروس: {stats.completedLessons}/{stats.totalLessons}
+                  </span>
+                  <span>دقة التمارين: {stats.accuracy > 0 ? `${stats.accuracy}%` : '—'}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <div>
+          <h2 className="text-xl font-display font-bold text-slate-900">
+            خزانة الأوسمة الافتراضية ({earnedBadges.length} من {BADGES.length})
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-600">
+            يُفتح كل وسام تلقائياً عند إتمام الدروس والتمارين بنجاح، ويمنحك نقاطاً إضافية! يمكنك اختيار وسامك المفضّل لعرضه بجانب اسمك.
+          </p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -250,7 +394,7 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
             return (
               <div
                 key={badge.id}
-                className={`rounded-2xl border p-4 flex flex-col justify-between space-y-4 transition-colors ${
+                className={`card-interactive rounded-2xl border p-4 flex flex-col justify-between space-y-4 ${
                   unlocked
                     ? isEquipped
                       ? 'bg-amber-50/60 border-amber-400'
@@ -304,56 +448,6 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
         </div>
       </div>
 
-      {/* Per-Subject Mastery Breakdown */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-display font-bold text-slate-900">
-            تقدّم التلميذ حسب المواد الأساسية
-          </h2>
-          <span className="text-xs font-mono font-bold text-sky-700 tabular-nums">
-            الإتقان العام: {overallMasteryPercent}%
-          </span>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {(['math', 'science', 'arabic', 'french'] as SubjectId[]).map((sid) => {
-            const meta = SUBJECTS[sid];
-            const stats = subjectStats(sid);
-            return (
-              <div key={sid} className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className={`text-base font-display font-bold ${meta.accentText}`}>
-                      {meta.name}
-                    </div>
-                    <div className="text-xs text-slate-500" dir="ltr">
-                      {meta.frenchName}
-                    </div>
-                  </div>
-                  <span className="font-mono text-lg font-bold text-slate-900 tabular-nums">
-                    {stats.completionPercent}%
-                  </span>
-                </div>
-
-                <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full ${meta.barColor} transition-all duration-300`}
-                    style={{ width: `${stats.completionPercent}%` }}
-                  />
-                </div>
-
-                <div className="flex items-center justify-between text-xs text-slate-600 font-mono tabular-nums">
-                  <span>
-                    الدروس: {stats.completedLessons}/{stats.totalLessons}
-                  </span>
-                  <span>دقة التمارين: {stats.accuracy > 0 ? `${stats.accuracy}%` : '—'}</span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Next Recommendation & Activity Log */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div className="lg:col-span-5 bg-white border border-slate-200 rounded-2xl p-6 space-y-4">
           <div className="flex items-center gap-2">
@@ -363,10 +457,12 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
             </h2>
           </div>
           <p className="text-sm text-slate-700 leading-relaxed">
-            جمع التلميذ <strong>{progress.studentName}</strong> حتى الآن{' '}
+            جمع التلميذ{' '}
+            <strong>{progress.studentName.trim() || 'البطل'}</strong> حتى الآن{' '}
             <strong className="font-mono tabular-nums">{progress.points}</strong> نقطة وفتح{' '}
             <strong className="font-mono tabular-nums">{earnedBadges.length}</strong> أوسمة افتراضية.
-            إتمام درس جديد أو تحدي 3 دقائق يرفع التقدّم ويفتح الوسام التالي مباشرة.
+            آخر دخول مسجّل:{' '}
+            <strong className="font-mono tabular-nums">{progress.lastActiveDate}</strong>.
           </p>
 
           <div className="p-4 rounded-xl bg-sky-50 border border-sky-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -393,37 +489,48 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
               سجل النقاط والأنشطة الأخيرة
             </h2>
 
-            {!confirmReset ? (
+            <div className="flex flex-wrap items-center gap-4">
               <button
                 type="button"
-                onClick={() => setConfirmReset(true)}
-                className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-rose-700 transition-colors cursor-pointer"
+                onClick={onSimulateAbsence}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700 hover:text-amber-900 transition-colors cursor-pointer"
               >
-                <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
-                إعادة ضبط السجل
+                <CalendarHeart className="w-3.5 h-3.5" aria-hidden="true" />
+                معاينة تذكير الغياب (+3 أيام)
               </button>
-            ) : (
-              <div className="flex items-center gap-2 text-xs">
-                <span className="text-rose-700 font-semibold">تأكيد مسح التقدم؟</span>
+
+              {!confirmReset ? (
                 <button
                   type="button"
-                  onClick={() => {
-                    onResetProgress();
-                    setConfirmReset(false);
-                  }}
-                  className="px-3 py-1 bg-rose-600 text-white font-semibold rounded-md cursor-pointer"
+                  onClick={() => setConfirmReset(true)}
+                  className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-rose-700 transition-colors cursor-pointer"
                 >
-                  نعم، امسح
+                  <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
+                  إعادة ضبط السجل
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setConfirmReset(false)}
-                  className="px-3 py-1 bg-slate-100 text-slate-700 font-semibold rounded-md cursor-pointer"
-                >
-                  إلغاء
-                </button>
-              </div>
-            )}
+              ) : (
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="text-rose-700 font-semibold">تأكيد مسح التقدم؟</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onResetProgress();
+                      setConfirmReset(false);
+                    }}
+                    className="px-3 py-1 bg-rose-600 text-white font-semibold rounded-md cursor-pointer"
+                  >
+                    نعم، امسح
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmReset(false)}
+                    className="px-3 py-1 bg-slate-100 text-slate-700 font-semibold rounded-md cursor-pointer"
+                  >
+                    إلغاء
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
           {progress.activityLog.length === 0 ? (
@@ -436,32 +543,36 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
                 <thead>
                   <tr className="border-b border-slate-200 text-xs text-slate-500">
                     <th className="py-2.5 font-semibold">النشاط / الدرس</th>
-                    <th className="py-2.5 font-semibold">المادة</th>
+                    <th className="py-2.5 font-semibold">السنة والمادة</th>
                     <th className="py-2.5 font-semibold">النتيجة</th>
                     <th className="py-2.5 font-semibold">النقاط</th>
                     <th className="py-2.5 font-semibold">التاريخ</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {progress.activityLog.map((entry) => (
-                    <tr key={entry.id}>
-                      <td className="py-3 font-medium text-slate-900">{entry.title}</td>
-                      <td className="py-3 text-slate-600">
-                        {entry.mode === 'express'
-                          ? 'شامل (4 مواد)'
-                          : SUBJECTS[entry.subjectId].name}
-                      </td>
-                      <td className="py-3 font-mono font-semibold text-slate-900 tabular-nums">
-                        {entry.score} / {entry.total}
-                      </td>
-                      <td className="py-3 font-mono font-semibold text-amber-700 tabular-nums">
-                        +{entry.pointsEarned}
-                      </td>
-                      <td className="py-3 font-mono text-xs text-slate-500 tabular-nums">
-                        {entry.date}
-                      </td>
-                    </tr>
-                  ))}
+                  {progress.activityLog.map((entry) => {
+                    const entryGrade = GRADES.find((g) => g.grade === entry.grade);
+                    return (
+                      <tr key={entry.id}>
+                        <td className="py-3 font-medium text-slate-900">{entry.title}</td>
+                        <td className="py-3 text-slate-600">
+                          {entryGrade ? `${entryGrade.shortLabel} · ` : ''}
+                          {entry.mode === 'express'
+                            ? 'شامل (4 مواد)'
+                            : SUBJECTS[entry.subjectId].name}
+                        </td>
+                        <td className="py-3 font-mono font-semibold text-slate-900 tabular-nums">
+                          {entry.score} / {entry.total}
+                        </td>
+                        <td className="py-3 font-mono font-semibold text-amber-700 tabular-nums">
+                          +{entry.pointsEarned}
+                        </td>
+                        <td className="py-3 font-mono text-xs text-slate-500 tabular-nums">
+                          {entry.date}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

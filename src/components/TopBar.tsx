@@ -32,7 +32,7 @@ export const TopBar: React.FC<TopBarProps> = ({ activeView, onNavigate }) => {
           onClick={() => handleNav('home')}
           className="text-xl font-display font-extrabold tracking-tight text-slate-900 whitespace-nowrap shrink-0 cursor-pointer"
         >
-          منارة الخامسة
+          منارة التعلّم
         </button>
 
         {/* Zone 2: 4 concise single-line text navigation links */}

@@ -1,15 +1,19 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Timer, Zap, ArrowRight, ShieldCheck } from 'lucide-react';
-import { LESSONS } from '../data/tunisianCurriculum';
-import { Exercise } from '../types/curriculum';
+import { GRADES, LESSONS } from '../data/tunisianCurriculum';
+import { Exercise, GradeLevel, SubjectId } from '../types/curriculum';
 import { ExerciseEngine } from './ExerciseEngine';
 
 interface ExpressChallengeProps {
+  selectedGrade: GradeLevel;
+  onSelectGrade: (grade: GradeLevel) => void;
   onComplete: (score: number, total: number, pointsEarned: number) => void;
   onExit: () => void;
 }
 
 export const ExpressChallenge: React.FC<ExpressChallengeProps> = ({
+  selectedGrade,
+  onSelectGrade,
   onComplete,
   onExit,
 }) => {
@@ -18,13 +22,28 @@ export const ExpressChallenge: React.FC<ExpressChallengeProps> = ({
   const [sessionKey, setSessionKey] = useState(0);
   const [mascotFailed, setMascotFailed] = useState(false);
 
+  const activeGradeMeta = GRADES.find((g) => g.grade === selectedGrade) ?? GRADES[2];
+
   const challengeExercises: Exercise[] = useMemo(() => {
-    const mathEx = LESSONS.find((l) => l.subjectId === 'math')?.exercises[sessionKey % 4];
-    const scienceEx = LESSONS.find((l) => l.subjectId === 'science')?.exercises[sessionKey % 4];
-    const arabicEx = LESSONS.find((l) => l.subjectId === 'arabic')?.exercises[sessionKey % 4];
-    const frenchEx = LESSONS.find((l) => l.subjectId === 'french')?.exercises[sessionKey % 4];
-    return [mathEx, scienceEx, arabicEx, frenchEx].filter((x): x is Exercise => Boolean(x));
-  }, [sessionKey]);
+    const subjects: SubjectId[] = ['math', 'science', 'arabic', 'french'];
+    const gradeLessons = LESSONS.filter((l) => l.grade === selectedGrade);
+    const picked: Exercise[] = [];
+
+    for (const sid of subjects) {
+      const pool = gradeLessons
+        .filter((l) => l.subjectId === sid)
+        .flatMap((l) => l.exercises);
+      const fallbackPool =
+        pool.length > 0
+          ? pool
+          : LESSONS.filter((l) => l.subjectId === sid).flatMap((l) => l.exercises);
+      if (fallbackPool.length > 0) {
+        picked.push(fallbackPool[sessionKey % fallbackPool.length]);
+      }
+    }
+
+    return picked;
+  }, [selectedGrade, sessionKey]);
 
   useEffect(() => {
     if (relaxedMode || secondsLeft <= 0) return;
@@ -33,6 +52,12 @@ export const ExpressChallenge: React.FC<ExpressChallengeProps> = ({
     }, 1000);
     return () => window.clearInterval(timer);
   }, [relaxedMode, secondsLeft]);
+
+  const handleSwitchGrade = (grade: GradeLevel) => {
+    onSelectGrade(grade);
+    setSecondsLeft(180);
+    setSessionKey((k) => k + 1);
+  };
 
   const mins = Math.floor(secondsLeft / 60);
   const secs = secondsLeft % 60;
@@ -51,10 +76,10 @@ export const ExpressChallenge: React.FC<ExpressChallengeProps> = ({
             العودة إلى الرئيسية
           </button>
           <h1 className="text-2xl sm:text-3xl font-display font-bold text-slate-900">
-            تحدي 3 دقائق السريع (بداية خفيفة دون ملل)
+            تحدي 3 دقائق السريع ({activeGradeMeta.shortLabel})
           </h1>
           <p className="text-sm text-slate-600">
-            4 أسئلة متنوّعة من الرياضيات والإيقاظ العلمي والعربية والفرنسية تمنحك نقاطاً ووسام قاهر الكسل!
+            4 أسئلة متنوّعة من الرياضيات والإيقاظ العلمي والعربية والفرنسية لـ {activeGradeMeta.label} تمنحك نقاطاً ووسام قاهر الكسل!
           </p>
         </div>
 
@@ -76,6 +101,27 @@ export const ExpressChallenge: React.FC<ExpressChallengeProps> = ({
         </div>
       </div>
 
+      {/* Quick Grade Switcher */}
+      <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl bg-white border border-slate-200">
+        <span className="text-xs font-semibold text-slate-700">تبديل السنة الدراسية للتحدي:</span>
+        <div className="flex flex-wrap items-center gap-1 p-1 bg-slate-100 rounded-lg border border-slate-200">
+          {GRADES.map((g) => (
+            <button
+              key={g.grade}
+              type="button"
+              onClick={() => handleSwitchGrade(g.grade)}
+              className={`px-3 py-1 text-xs font-semibold rounded-md transition-colors whitespace-nowrap cursor-pointer ${
+                g.grade === selectedGrade
+                  ? 'bg-sky-600 text-white shadow-xs'
+                  : 'text-slate-700 hover:bg-white'
+              }`}
+            >
+              {g.shortLabel}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="flex items-center gap-4 p-4 rounded-2xl bg-sky-50 border border-sky-200">
         <div className="w-14 h-14 rounded-xl bg-white border border-sky-200 overflow-hidden shrink-0 flex items-center justify-center">
           {!mascotFailed ? (
@@ -91,7 +137,7 @@ export const ExpressChallenge: React.FC<ExpressChallengeProps> = ({
           )}
         </div>
         <div className="text-sm text-sky-950 space-y-0.5">
-          <div className="font-bold">رسالة فنك الذكي:</div>
+          <div className="font-bold">رسالة فنك الذكي ({activeGradeMeta.shortLabel}):</div>
           <p className="text-sky-900">
             أنهِ هذه التمارين الأربعة القصيرة لتحصل على نقاط إضافية وتفتح <strong>وسام قاهر الكسل</strong> الافتراضي!
           </p>
@@ -99,9 +145,9 @@ export const ExpressChallenge: React.FC<ExpressChallengeProps> = ({
       </div>
 
       <ExerciseEngine
-        key={sessionKey}
+        key={`${selectedGrade}-${sessionKey}`}
         exercises={challengeExercises}
-        modeLabel="تحدي 3 دقائق الشامل"
+        modeLabel={`تحدي 3 دقائق (${activeGradeMeta.shortLabel})`}
         onComplete={(score, total, points) => {
           onComplete(score, total, points + 20);
         }}

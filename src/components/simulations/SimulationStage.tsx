@@ -8,6 +8,11 @@ import { HeartLab } from './HeartLab';
 import { ArabicSentenceLab } from './ArabicSentenceLab';
 import { HamzaLab } from './HamzaLab';
 import { FrenchVerbLab } from './FrenchVerbLab';
+import { PlaceValueLab } from './PlaceValueLab';
+import { MatterLab } from './MatterLab';
+import { WordTypesLab } from './WordTypesLab';
+import { FrenchArticlesLab } from './FrenchArticlesLab';
+import { PercentRatioLab } from './PercentRatioLab';
 
 interface SimulationStageProps {
   simType: SimulationType;
@@ -31,5 +36,15 @@ export const SimulationStage: React.FC<SimulationStageProps> = ({ simType }) => 
       return <HamzaLab />;
     case 'french_verbs':
       return <FrenchVerbLab />;
+    case 'place_value':
+      return <PlaceValueLab />;
+    case 'states_of_matter':
+      return <MatterLab />;
+    case 'word_types':
+      return <WordTypesLab />;
+    case 'french_articles':
+      return <FrenchArticlesLab />;
+    case 'percent_ratio':
+      return <PercentRatioLab />;
   }
 };

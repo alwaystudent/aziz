@@ -1,15 +1,33 @@
 import React, { useState } from 'react';
-import { ArrowLeft, BookOpen, Compass, Sparkles, Flame, CheckCircle2, Award } from 'lucide-react';
-import { BADGES } from '../data/tunisianCurriculum';
-import { LevelInfo, StudentProgress } from '../types/curriculum';
+import {
+  ArrowLeft,
+  BookOpen,
+  Compass,
+  Sparkles,
+  Flame,
+  CheckCircle2,
+  Award,
+  GraduationCap,
+} from 'lucide-react';
+import { BADGES, GRADES } from '../data/tunisianCurriculum';
+import { GradeLevel, LevelInfo, StudentProgress } from '../types/curriculum';
 import { BadgeMedallion } from './BadgeMedallion';
+import { ReturnReminderBanner } from './ReturnReminderBanner';
 
 interface HeroSectionProps {
   progress: StudentProgress;
+  selectedGrade: GradeLevel;
+  onSelectGrade: (grade: GradeLevel) => void;
   completedCount: number;
   totalLessons: number;
   earnedBadgesCount: number;
   levelInfo: LevelInfo;
+  showReturnReminder: boolean;
+  daysAbsent: number;
+  onClaimReturnAndExpress: () => void;
+  onClaimReturnAndSubjects: () => void;
+  onDismissReturnReminder: () => void;
+  onSaveStudentName: (name: string) => void;
   onExploreSubjects: () => void;
   onStartExpress: () => void;
   onOpenProgress: () => void;
@@ -17,18 +35,28 @@ interface HeroSectionProps {
 
 export const HeroSection: React.FC<HeroSectionProps> = ({
   progress,
+  selectedGrade,
+  onSelectGrade,
   completedCount,
   totalLessons,
   earnedBadgesCount,
   levelInfo,
+  showReturnReminder,
+  daysAbsent,
+  onClaimReturnAndExpress,
+  onClaimReturnAndSubjects,
+  onDismissReturnReminder,
+  onSaveStudentName,
   onExploreSubjects,
   onStartExpress,
   onOpenProgress,
 }) => {
   const [heroImgFailed, setHeroImgFailed] = useState(false);
   const [mascotFailed, setMascotFailed] = useState(false);
+  const [draftName, setDraftName] = useState('');
 
   const equippedBadge = BADGES.find((b) => b.id === progress.equippedBadgeId) ?? null;
+  const activeGradeMeta = GRADES.find((g) => g.grade === selectedGrade) ?? GRADES[2];
 
   const levelProgressPercent =
     levelInfo.nextMinPoints === null
@@ -43,27 +71,70 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
         );
 
   return (
-    <section className="max-w-7xl mx-auto px-4 sm:px-6 pt-8 pb-10 space-y-8">
+    <section className="max-w-7xl mx-auto px-4 sm:px-6 pt-7 pb-10 space-y-7">
+      {/* Gentle Return Reminder if absent > 2 days */}
+      {showReturnReminder && (
+        <ReturnReminderBanner
+          studentName={progress.studentName}
+          daysAbsent={daysAbsent}
+          onClaimAndStartExpress={onClaimReturnAndExpress}
+          onClaimAndExploreLessons={onClaimReturnAndSubjects}
+          onDismiss={onDismissReturnReminder}
+        />
+      )}
+
+      {/* 2-Column Hero Split */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
-        <div className="lg:col-span-6 flex flex-col justify-between space-y-6 py-2">
+        <div className="lg:col-span-6 flex flex-col justify-between space-y-6 py-1">
           <div className="space-y-4">
             <div className="text-xs font-semibold text-sky-700">
-              منهج الجمهورية التونسية · السنة الخامسة ابتدائي
+              منهج الجمهورية التونسية · السنوات من الثالثة إلى السادسة ابتدائي
             </div>
-            <h1 className="text-3xl sm:text-4xl lg:text-[2.65rem] font-display font-extrabold text-slate-900 leading-[1.2] text-balance">
-              افهم دروس الخامسة بالتجربة واللعب، واجمع النقاط والأوسمة
+            <h1 className="text-3xl sm:text-4xl lg:text-[2.6rem] font-display font-extrabold text-slate-900 leading-[1.2] text-balance">
+              افهم دروس الابتدائي بالتجربة واللعب، واجمع النقاط والأوسمة
             </h1>
             <p className="text-base text-slate-600 leading-relaxed max-w-xl">
               مختبرات تفاعلية في الرياضيات والإيقاظ العلمي، وألعاب لغوية في العربية والفرنسية مصممة في مهمات قصيرة من 4 دقائق تمنحك نقاطاً فورية وأوسمة افتراضية مع كل إنجاز.
             </p>
 
-            <div className="flex flex-wrap items-center gap-4 pt-2">
+            {/* Interactive Grade Switcher (3 to 6) */}
+            <div className="p-3 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2.5">
+              <div className="flex items-center justify-between gap-2 text-xs">
+                <span className="inline-flex items-center gap-1.5 font-semibold text-slate-800">
+                  <GraduationCap className="w-4 h-4 text-sky-700" aria-hidden="true" />
+                  اختر سنتك الدراسية:
+                </span>
+                <span className="text-sky-700 font-semibold">{activeGradeMeta.label}</span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 p-1 bg-slate-100 rounded-xl border border-slate-200">
+                {GRADES.map((g) => {
+                  const active = g.grade === selectedGrade;
+                  return (
+                    <button
+                      key={g.grade}
+                      type="button"
+                      onClick={() => onSelectGrade(g.grade)}
+                      className={`px-2.5 py-2 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap cursor-pointer ${
+                        active
+                          ? 'bg-sky-600 text-white shadow-xs'
+                          : 'text-slate-700 hover:bg-white hover:text-slate-900'
+                      }`}
+                    >
+                      {g.shortLabel}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-slate-600 leading-relaxed">{activeGradeMeta.subtitle}</p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3.5 pt-1">
               <button
                 type="button"
                 onClick={onExploreSubjects}
-                className="inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold text-white bg-sky-600 hover:bg-sky-700 rounded-xl transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                className="inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold text-white bg-sky-600 hover:bg-sky-700 rounded-xl shadow-xs transition-colors whitespace-nowrap shrink-0 cursor-pointer"
               >
-                استكشف الدروس والمختبرات
+                استكشف دروس {activeGradeMeta.shortLabel}
                 <ArrowLeft className="w-4 h-4" aria-hidden="true" />
               </button>
               <button
@@ -76,10 +147,10 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             </div>
           </div>
 
-          {/* Adjacent Companion + Equipped Badge Card */}
-          <div className="p-4 rounded-2xl bg-white border border-slate-200 space-y-3">
+          {/* Adjacent Companion / Student Card + Equipped Badge */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3.5">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-xl bg-slate-50 border border-slate-200 overflow-hidden shrink-0 flex items-center justify-center">
+              <div className="w-14 h-14 rounded-xl bg-amber-50 border border-amber-200 overflow-hidden shrink-0 flex items-center justify-center">
                 {!mascotFailed ? (
                   <img
                     src="/src/assets/images/mascot_fanak_fox_1795189779395.jpg"
@@ -95,7 +166,10 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               <div className="min-w-0 flex-1 space-y-0.5">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="text-sm font-bold text-slate-900">
-                    مرحباً {progress.studentName} · المستوى {levelInfo.level}: {levelInfo.title}
+                    {progress.studentName.trim()
+                      ? `مرحباً ${progress.studentName}`
+                      : 'مرحباً بك في بطاقة التلميذ'}{' '}
+                    · المستوى {levelInfo.level}: {levelInfo.title}
                   </div>
                   <span className="font-mono text-xs font-bold text-amber-700 tabular-nums">
                     {progress.points} نقطة
@@ -112,29 +186,67 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               {equippedBadge && <BadgeMedallion badge={equippedBadge} unlocked size="sm" />}
             </div>
 
-            <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+            {!progress.studentName.trim() && (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (!draftName.trim()) return;
+                  onSaveStudentName(draftName.trim());
+                  setDraftName('');
+                }}
+                className="flex flex-wrap items-center gap-2 pt-1"
+              >
+                <input
+                  type="text"
+                  value={draftName}
+                  onChange={(e) => setDraftName(e.target.value)}
+                  placeholder="أدخل اسمك هنا ليظهر في بطاقة التلميذ..."
+                  aria-label="أدخل اسم التلميذ"
+                  className="flex-1 min-w-[180px] px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl bg-slate-50 focus:bg-white focus:outline-none focus:border-sky-500"
+                />
+                <button
+                  type="submit"
+                  className="px-4 py-2 text-xs font-semibold text-white bg-sky-600 hover:bg-sky-700 rounded-xl transition-colors whitespace-nowrap cursor-pointer"
+                >
+                  حفظ الاسم
+                </button>
+              </form>
+            )}
+
+            <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
               <div
-                className="h-full bg-amber-500 transition-all duration-300"
+                className="h-full bg-gradient-to-l from-amber-500 to-sky-500 transition-all duration-300"
                 style={{ width: `${levelProgressPercent}%` }}
               />
             </div>
           </div>
         </div>
 
+        {/* Visual Frame with Measured Scrim Caption */}
         <div className="lg:col-span-6">
-          <div className="h-full min-h-[280px] sm:min-h-[340px] rounded-2xl overflow-hidden border border-slate-200 bg-slate-100">
+          <div className="relative h-full min-h-[300px] sm:min-h-[380px] rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 shadow-xs">
             {!heroImgFailed ? (
-              <img
-                src="/src/assets/images/hero_tunisian_learning_1795189781389.jpg"
-                alt="مكتب تعليمي مشمس مطل على العمارة التونسية والبحر المتوسط"
-                referrerPolicy="no-referrer"
-                onError={() => setHeroImgFailed(true)}
-                className="w-full h-full object-cover"
-              />
+              <>
+                <img
+                  src="/src/assets/images/hero_tunisian_learning_1795189781389.jpg"
+                  alt="مكتب تعليمي مشمس مطل على العمارة التونسية والبحر المتوسط"
+                  referrerPolicy="no-referrer"
+                  onError={() => setHeroImgFailed(true)}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/85 via-slate-900/45 to-transparent p-5 sm:p-6 text-white">
+                  <div className="text-xs font-medium text-sky-200">
+                    {activeGradeMeta.label} · 4 مواد أساسية
+                  </div>
+                  <div className="mt-1 text-base sm:text-lg font-display font-bold">
+                    مختبرات الرياضيات والإيقاظ العلمي والعربية والفرنسية
+                  </div>
+                </div>
+              </>
             ) : (
               <div className="w-full h-full flex flex-col items-center justify-center p-8 text-center bg-gradient-to-br from-sky-50 to-slate-100">
                 <BookOpen className="w-12 h-12 text-sky-600 mb-3" aria-hidden="true" />
-                <div className="font-display font-bold text-slate-800">منصة منارة الخامسة</div>
+                <div className="font-display font-bold text-slate-800">منصة منارة الابتدائي</div>
                 <div className="text-sm text-slate-500 mt-1">تعلّم بالمحاكاة والألعاب التفاعلية</div>
               </div>
             )}
@@ -144,20 +256,22 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
       {/* Full-width 4-Column Motivation & Progress KPI Strip */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 flex items-center justify-between gap-3">
+        <div className="card-interactive p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 flex items-center justify-between gap-3">
           <div>
             <div className="text-xs font-medium text-slate-500">مجموع النقاط</div>
             <div className="mt-1 text-2xl font-mono font-bold text-slate-900 tabular-nums">
               {progress.points}
             </div>
           </div>
-          <Sparkles className="w-6 h-6 text-amber-500 shrink-0" aria-hidden="true" />
+          <div className="w-11 h-11 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center shrink-0">
+            <Sparkles className="w-5 h-5 text-amber-600" aria-hidden="true" />
+          </div>
         </div>
 
         <button
           type="button"
           onClick={onOpenProgress}
-          className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 hover:border-amber-300 text-right flex items-center justify-between gap-3 transition-colors cursor-pointer"
+          className="card-interactive p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 hover:border-amber-300 text-right flex items-center justify-between gap-3 cursor-pointer"
         >
           <div>
             <div className="text-xs font-medium text-slate-500">الأوسمة الافتراضية</div>
@@ -165,27 +279,35 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               {earnedBadgesCount} / {BADGES.length}
             </div>
           </div>
-          <Award className="w-6 h-6 text-amber-600 shrink-0" aria-hidden="true" />
+          <div className="w-11 h-11 rounded-xl bg-sky-50 border border-sky-200 flex items-center justify-center shrink-0">
+            <Award className="w-5 h-5 text-sky-700" aria-hidden="true" />
+          </div>
         </button>
 
-        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 flex items-center justify-between gap-3">
+        <div className="card-interactive p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 flex items-center justify-between gap-3">
           <div>
-            <div className="text-xs font-medium text-slate-500">الدروس المنجزة</div>
+            <div className="text-xs font-medium text-slate-500">
+              دروس {activeGradeMeta.shortLabel}
+            </div>
             <div className="mt-1 text-2xl font-mono font-bold text-slate-900 tabular-nums">
               {completedCount} / {totalLessons}
             </div>
           </div>
-          <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0" aria-hidden="true" />
+          <div className="w-11 h-11 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center shrink-0">
+            <CheckCircle2 className="w-5 h-5 text-emerald-600" aria-hidden="true" />
+          </div>
         </div>
 
-        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 flex items-center justify-between gap-3">
+        <div className="card-interactive p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 flex items-center justify-between gap-3">
           <div>
             <div className="text-xs font-medium text-slate-500">أيام المواظبة</div>
             <div className="mt-1 text-2xl font-mono font-bold text-slate-900 tabular-nums">
               {progress.streakDays} أيام
             </div>
           </div>
-          <Flame className="w-6 h-6 text-orange-500 shrink-0" aria-hidden="true" />
+          <div className="w-11 h-11 rounded-xl bg-orange-50 border border-orange-200 flex items-center justify-center shrink-0">
+            <Flame className="w-5 h-5 text-orange-500" aria-hidden="true" />
+          </div>
         </div>
       </div>
     </section>

@@ -1,3 +1,5 @@
+export type GradeLevel = 3 | 4 | 5 | 6;
+
 export type SubjectId = 'math' | 'science' | 'arabic' | 'french';
 
 export type SimulationType =
@@ -8,7 +10,19 @@ export type SimulationType =
   | 'heart'
   | 'sentence'
   | 'hamza'
-  | 'french_verbs';
+  | 'french_verbs'
+  | 'place_value'
+  | 'states_of_matter'
+  | 'word_types'
+  | 'french_articles'
+  | 'percent_ratio';
+
+export interface GradeMeta {
+  grade: GradeLevel;
+  label: string;
+  shortLabel: string;
+  subtitle: string;
+}
 
 export interface SubjectMeta {
   id: SubjectId;
@@ -88,6 +102,7 @@ export type Exercise =
 
 export interface Lesson {
   id: string;
+  grade: GradeLevel;
   subjectId: SubjectId;
   title: string;
   subtitle: string;
@@ -110,6 +125,7 @@ export interface LessonCompletion {
 export interface ActivityEntry {
   id: string;
   lessonId: string;
+  grade: GradeLevel;
   title: string;
   subjectId: SubjectId;
   score: number;
@@ -155,13 +171,14 @@ export interface RewardNotification {
 
 export interface StudentProgress {
   studentName: string;
+  selectedGrade: GradeLevel;
   schoolGovernorate: string;
   points: number;
   streakDays: number;
   lastActiveDate: string;
   completedLessons: Record<string, LessonCompletion>;
   completedSteps: Record<string, number[]>;
-  unlockedBadges: Record<string, string>; // badgeId -> ISO date unlocked
+  unlockedBadges: Record<string, string>;
   equippedBadgeId: string | null;
   expressChallengesCompleted: number;
   activityLog: ActivityEntry[];

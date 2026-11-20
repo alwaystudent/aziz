@@ -3,30 +3,45 @@ import { BADGES, LESSONS, LEVELS } from '../data/tunisianCurriculum';
 import {
   ActivityEntry,
   BadgeDefinition,
+  GradeLevel,
   LevelInfo,
   RewardNotification,
   StudentProgress,
   SubjectId,
 } from '../types/curriculum';
 
-const STORAGE_KEY = 'manarat_khamisa_progress_v2';
+const STORAGE_KEY = 'manarat_khamisa_progress_v3';
 
 const getTodayKey = () => new Date().toISOString().slice(0, 10);
 
+const getDaysAgoKey = (daysAgo: number) => {
+  const date = new Date();
+  date.setDate(date.getDate() - daysAgo);
+  return date.toISOString().slice(0, 10);
+};
+
+export function calculateDaysBetween(pastDateStr: string, currentDateStr: string): number {
+  const pastMs = Date.parse(`${pastDateStr}T00:00:00Z`);
+  const currMs = Date.parse(`${currentDateStr}T00:00:00Z`);
+  if (Number.isNaN(pastMs) || Number.isNaN(currMs)) return 0;
+  return Math.max(0, Math.floor((currMs - pastMs) / (1000 * 60 * 60 * 24)));
+}
+
 const createInitialProgress = (): StudentProgress => {
-  const today = getTodayKey();
+  const threeDaysAgo = getDaysAgoKey(3);
   return {
-    studentName: 'ياسين بن علي',
-    schoolGovernorate: 'تونس — السنة الخامسة ابتدائي',
+    studentName: '',
+    selectedGrade: 5,
+    schoolGovernorate: 'تونس',
     points: 115,
     streakDays: 3,
-    lastActiveDate: today,
+    lastActiveDate: threeDaysAgo,
     completedLessons: {
       'math-fractions': {
         bestScore: 3,
         totalQuestions: 4,
         attempts: 1,
-        lastCompletedAt: today,
+        lastCompletedAt: threeDaysAgo,
       },
     },
     completedSteps: {
@@ -34,7 +49,7 @@ const createInitialProgress = (): StudentProgress => {
       'science-circuit': [0],
     },
     unlockedBadges: {
-      'first-step': today,
+      'first-step': threeDaysAgo,
     },
     equippedBadgeId: 'first-step',
     expressChallengesCompleted: 0,
@@ -42,17 +57,52 @@ const createInitialProgress = (): StudentProgress => {
       {
         id: 'seed-1',
         lessonId: 'math-fractions',
+        grade: 5,
         title: 'الأعداد الكسرية والمقارنة',
         subjectId: 'math',
         score: 3,
         total: 4,
         pointsEarned: 85,
-        date: today,
+        date: threeDaysAgo,
         mode: 'lesson',
       },
     ],
   };
 };
+
+function normalizeProgress(raw: Partial<StudentProgress>): StudentProgress {
+  const fallback = createInitialProgress();
+  const validGrade: GradeLevel =
+    raw.selectedGrade === 3 ||
+    raw.selectedGrade === 4 ||
+    raw.selectedGrade === 5 ||
+    raw.selectedGrade === 6
+      ? raw.selectedGrade
+      : 5;
+
+  const activityLog: ActivityEntry[] = Array.isArray(raw.activityLog)
+    ? raw.activityLog.map((entry) => ({
+        ...entry,
+        grade:
+          entry.grade === 3 || entry.grade === 4 || entry.grade === 5 || entry.grade === 6
+            ? entry.grade
+            : 5,
+      }))
+    : fallback.activityLog;
+
+  const cleanName =
+    typeof raw.studentName === 'string' && raw.studentName.trim() !== 'ياسين بن علي'
+      ? raw.studentName.trim()
+      : '';
+
+  return {
+    ...fallback,
+    ...raw,
+    studentName: cleanName,
+    selectedGrade: validGrade,
+    activityLog,
+  };
+}
 
 function evaluateNewBadges(candidate: StudentProgress): BadgeDefinition[] {
   const completedCount = Object.keys(candidate.completedLessons).length;
@@ -127,7 +177,7 @@ export function useStudentProgress() {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
-        return JSON.parse(saved) as StudentProgress;
+        return normalizeProgress(JSON.parse(saved) as Partial<StudentProgress>);
       }
     } catch {
       // Fallback to initial state
@@ -137,6 +187,7 @@ export function useStudentProgress() {
 
   const [rewardNotification, setRewardNotification] =
     useState<RewardNotification | null>(null);
+  const [reminderDismissed, setReminderDismissed] = useState(false);
 
   useEffect(() => {
     try {
@@ -146,8 +197,62 @@ export function useStudentProgress() {
     }
   }, [progress]);
 
+  const setSelectedGrade = useCallback((grade: GradeLevel) => {
+    setProgress((prev) => ({
+      ...prev,
+      selectedGrade: grade,
+    }));
+  }, []);
+
   const dismissRewardNotification = useCallback(() => {
     setRewardNotification(null);
+  }, []);
+
+  const dismissReturnReminder = useCallback(() => {
+    setReminderDismissed(true);
+  }, []);
+
+  const claimReturnBonus = useCallback(() => {
+    const today = getTodayKey();
+    setProgress((prev) => {
+      const bonus = 25;
+      let nextState: StudentProgress = {
+        ...prev,
+        points: prev.points + bonus,
+        lastActiveDate: today,
+      };
+      const unlockedNow = evaluateNewBadges(nextState);
+      let badgeBonus = 0;
+      if (unlockedNow.length > 0) {
+        const nextUnlocked = { ...nextState.unlockedBadges };
+        for (const b of unlockedNow) {
+          nextUnlocked[b.id] = today;
+          badgeBonus += b.bonusPoints;
+        }
+        nextState = {
+          ...nextState,
+          points: nextState.points + badgeBonus,
+          unlockedBadges: nextUnlocked,
+          equippedBadgeId: nextState.equippedBadgeId ?? unlockedNow[0].id,
+        };
+      }
+      setRewardNotification({
+        id: `${Date.now()}`,
+        pointsEarned: bonus + badgeBonus,
+        reason: 'مكافأة العودة النشيطة إلى المنارة',
+        unlockedBadges: unlockedNow,
+      });
+      return nextState;
+    });
+    setReminderDismissed(true);
+  }, []);
+
+  const simulateAbsence = useCallback((daysAgo: number) => {
+    setProgress((prev) => ({
+      ...prev,
+      lastActiveDate: getDaysAgoKey(daysAgo),
+    }));
+    setReminderDismissed(false);
   }, []);
 
   const markStepCompleted = useCallback((lessonId: string, stepIndex: number) => {
@@ -160,6 +265,7 @@ export function useStudentProgress() {
       let nextState: StudentProgress = {
         ...prev,
         points: prev.points + basePoints,
+        lastActiveDate: today,
         completedSteps: {
           ...prev.completedSteps,
           [lessonId]: [...existing, stepIndex],
@@ -198,6 +304,7 @@ export function useStudentProgress() {
       lessonId: string,
       title: string,
       subjectId: SubjectId,
+      grade: GradeLevel,
       score: number,
       total: number,
       pointsFromExercises: number,
@@ -205,6 +312,7 @@ export function useStudentProgress() {
     ) => {
       const today = getTodayKey();
       setProgress((prev) => {
+        const daysGap = calculateDaysBetween(prev.lastActiveDate, today);
         const isNewDay = prev.lastActiveDate !== today;
         const prevLesson = prev.completedLessons[lessonId];
 
@@ -224,7 +332,8 @@ export function useStudentProgress() {
         let nextState: StudentProgress = {
           ...prev,
           points: prev.points + pointsFromExercises,
-          streakDays: isNewDay ? prev.streakDays + 1 : prev.streakDays,
+          streakDays:
+            daysGap > 2 ? 1 : isNewDay ? prev.streakDays + 1 : prev.streakDays,
           lastActiveDate: today,
           completedLessons: updatedLessons,
           expressChallengesCompleted:
@@ -233,7 +342,6 @@ export function useStudentProgress() {
               : prev.expressChallengesCompleted,
         };
 
-        // Evaluate newly unlocked virtual badges (including cascade if bonus crosses 250/500)
         const unlockedNow = evaluateNewBadges(nextState);
         let badgeBonusTotal = 0;
         if (unlockedNow.length > 0) {
@@ -248,7 +356,6 @@ export function useStudentProgress() {
             unlockedBadges: nextUnlocked,
             equippedBadgeId: nextState.equippedBadgeId ?? unlockedNow[0].id,
           };
-          // Re-check point-threshold badges after badge bonus
           const extraUnlocked = evaluateNewBadges(nextState);
           if (extraUnlocked.length > 0) {
             for (const eb of extraUnlocked) {
@@ -264,6 +371,7 @@ export function useStudentProgress() {
         const newEntry: ActivityEntry = {
           id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
           lessonId,
+          grade,
           title,
           subjectId,
           score,
@@ -305,19 +413,30 @@ export function useStudentProgress() {
   }, []);
 
   const updateStudentProfile = useCallback(
-    (studentName: string, schoolGovernorate: string) => {
+    (studentName: string, schoolGovernorate: string, selectedGrade?: GradeLevel) => {
       setProgress((prev) => ({
         ...prev,
         studentName: studentName.trim() || prev.studentName,
         schoolGovernorate: schoolGovernorate.trim() || prev.schoolGovernorate,
+        selectedGrade: selectedGrade ?? prev.selectedGrade,
       }));
     },
     []
   );
 
+  const updateStudentName = useCallback((studentName: string) => {
+    const cleaned = studentName.trim();
+    if (!cleaned) return;
+    setProgress((prev) => ({
+      ...prev,
+      studentName: cleaned,
+    }));
+  }, []);
+
   const resetProgress = useCallback(() => {
     setProgress((prev) => ({
       studentName: prev.studentName,
+      selectedGrade: prev.selectedGrade,
       schoolGovernorate: prev.schoolGovernorate,
       points: 0,
       streakDays: 1,
@@ -330,16 +449,30 @@ export function useStudentProgress() {
       activityLog: [],
     }));
     setRewardNotification(null);
+    setReminderDismissed(true);
   }, []);
 
-  const completedCount = Object.keys(progress.completedLessons).length;
-  const totalLessons = LESSONS.length;
-  const overallMasteryPercent = Math.round((completedCount / totalLessons) * 100);
+  const today = getTodayKey();
+  const daysAbsent = calculateDaysBetween(progress.lastActiveDate, today);
+  const showReturnReminder = daysAbsent > 2 && !reminderDismissed;
+
+  const activeGradeLessons = LESSONS.filter((l) => l.grade === progress.selectedGrade);
+  const completedCount = activeGradeLessons.filter(
+    (l) => Boolean(progress.completedLessons[l.id])
+  ).length;
+  const totalLessons = activeGradeLessons.length;
+  const overallCompletedCount = Object.keys(progress.completedLessons).length;
+  const overallTotalLessons = LESSONS.length;
+
+  const overallMasteryPercent =
+    totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
   const levelInfo = getLevelInfo(progress.points);
   const earnedBadges = Object.keys(progress.unlockedBadges);
 
-  const subjectStats = (subjectId: SubjectId) => {
-    const subjectLessons = LESSONS.filter((l) => l.subjectId === subjectId);
+  const subjectStats = (subjectId: SubjectId, grade: GradeLevel = progress.selectedGrade) => {
+    const subjectLessons = LESSONS.filter(
+      (l) => l.grade === grade && l.subjectId === subjectId
+    );
     const doneLessons = subjectLessons.filter((l) => progress.completedLessons[l.id]);
     const totalQuestions = doneLessons.reduce(
       (acc, l) => acc + (progress.completedLessons[l.id]?.totalQuestions ?? 0),
@@ -351,9 +484,10 @@ export function useStudentProgress() {
     );
     const accuracy =
       totalQuestions > 0 ? Math.round((totalScore / totalQuestions) * 100) : 0;
-    const completionPercent = Math.round(
-      (doneLessons.length / subjectLessons.length) * 100
-    );
+    const completionPercent =
+      subjectLessons.length > 0
+        ? Math.round((doneLessons.length / subjectLessons.length) * 100)
+        : 0;
     return {
       totalLessons: subjectLessons.length,
       completedLessons: doneLessons.length,
@@ -362,20 +496,41 @@ export function useStudentProgress() {
     };
   };
 
+  const gradeStats = (grade: GradeLevel) => {
+    const gradeLessons = LESSONS.filter((l) => l.grade === grade);
+    const done = gradeLessons.filter((l) => Boolean(progress.completedLessons[l.id])).length;
+    const total = gradeLessons.length;
+    return {
+      totalLessons: total,
+      completedLessons: done,
+      completionPercent: total > 0 ? Math.round((done / total) * 100) : 0,
+    };
+  };
+
   return {
     progress,
+    daysAbsent,
+    showReturnReminder,
     completedCount,
     totalLessons,
+    overallCompletedCount,
+    overallTotalLessons,
     overallMasteryPercent,
     subjectStats,
+    gradeStats,
     earnedBadges,
     levelInfo,
     rewardNotification,
+    setSelectedGrade,
     dismissRewardNotification,
+    dismissReturnReminder,
+    claimReturnBonus,
+    simulateAbsence,
     markStepCompleted,
     recordLessonResult,
     equipBadge,
     updateStudentProfile,
+    updateStudentName,
     resetProgress,
   };
 }
