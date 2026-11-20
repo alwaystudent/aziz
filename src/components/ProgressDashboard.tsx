@@ -118,7 +118,7 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
                 <div className="space-y-1">
                   <div className="flex flex-wrap items-center gap-3">
                     <h1 className="text-2xl sm:text-3xl font-display font-bold text-slate-900">
-                      {progress.studentName.trim() || 'أدخل اسم التلميذ'}
+                      {progress.studentName.trim() || 'عزيز'}
                     </h1>
                     <button
                       type="button"
@@ -131,7 +131,7 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
                       className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 hover:text-sky-700 underline underline-offset-4 cursor-pointer"
                     >
                       <Edit3 className="w-3.5 h-3.5" aria-hidden="true" />
-                      {progress.studentName.trim() ? 'تعديل الملف والسنة' : 'إدخال اسم التلميذ'}
+                      تعديل الملف والسنة
                     </button>
                   </div>
                   <div className="text-sm text-slate-600">
@@ -258,13 +258,13 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
               style={{ width: `${levelPercent}%` }}
             />
           </div>
-          <div className="grid grid-cols-5 gap-2 pt-1">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-1">
             {LEVELS.map((lvl) => {
               const reached = progress.points >= lvl.minPoints;
               return (
                 <div
                   key={lvl.level}
-                  className={`text-[11px] font-medium truncate ${
+                  className={`text-xs font-medium truncate ${
                     reached ? 'text-slate-900 font-semibold' : 'text-slate-400'
                   }`}
                 >
@@ -279,10 +279,10 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
       {/* Multi-Grade Overview Strip (Grades 3 to 6) */}
       <div className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-xl font-display font-bold text-slate-900">
+          <h2 className="text-xl sm:text-2xl font-display font-bold text-slate-900">
             التقدّم عبر السنوات الدراسية (من الثالثة إلى السادسة)
           </h2>
-          <span className="text-xs text-slate-500">
+          <span className="text-xs font-medium text-slate-500">
             اضغط على أي سنة لعرض تفصيل موادها الأساسية
           </span>
         </div>
@@ -326,7 +326,7 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
 
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-display font-bold text-slate-900">
+          <h2 className="text-xl sm:text-2xl font-display font-bold text-slate-900">
             تقدّم التلميذ في مواد {activeGradeMeta.label}
           </h2>
           <span className="text-xs font-mono font-bold text-sky-700 tabular-nums">
@@ -377,10 +377,10 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
 
       <div className="space-y-4">
         <div>
-          <h2 className="text-xl font-display font-bold text-slate-900">
+          <h2 className="text-xl sm:text-2xl font-display font-bold text-slate-900">
             خزانة الأوسمة الافتراضية ({earnedBadges.length} من {BADGES.length})
           </h2>
-          <p className="text-xs sm:text-sm text-slate-600">
+          <p className="text-sm text-slate-600 leading-relaxed mt-1">
             يُفتح كل وسام تلقائياً عند إتمام الدروس والتمارين بنجاح، ويمنحك نقاطاً إضافية! يمكنك اختيار وسامك المفضّل لعرضه بجانب اسمك.
           </p>
         </div>
@@ -452,13 +452,13 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
         <div className="lg:col-span-5 bg-white border border-slate-200 rounded-2xl p-6 space-y-4">
           <div className="flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-sky-700" aria-hidden="true" />
-            <h2 className="text-lg font-display font-bold text-slate-900">
+            <h2 className="text-base sm:text-lg font-display font-bold text-slate-900">
               ملخص المتابعة التربوية
             </h2>
           </div>
           <p className="text-sm text-slate-700 leading-relaxed">
             جمع التلميذ{' '}
-            <strong>{progress.studentName.trim() || 'البطل'}</strong> حتى الآن{' '}
+            <strong>{progress.studentName.trim() || 'عزيز'}</strong> حتى الآن{' '}
             <strong className="font-mono tabular-nums">{progress.points}</strong> نقطة وفتح{' '}
             <strong className="font-mono tabular-nums">{earnedBadges.length}</strong> أوسمة افتراضية.
             آخر دخول مسجّل:{' '}
@@ -485,7 +485,7 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
 
         <div className="lg:col-span-7 bg-white border border-slate-200 rounded-2xl p-6 space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-lg font-display font-bold text-slate-900">
+            <h2 className="text-base sm:text-lg font-display font-bold text-slate-900">
               سجل النقاط والأنشطة الأخيرة
             </h2>
 

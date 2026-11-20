@@ -320,7 +320,7 @@ export const ExerciseEngine: React.FC<ExerciseEngineProps> = ({
         <div className="space-y-4">
           <div
             dir={exercise.ltr ? 'ltr' : 'rtl'}
-            className="p-5 rounded-xl bg-slate-50 border border-slate-200 text-lg font-medium text-slate-900 leading-relaxed"
+            className="p-5 rounded-xl bg-slate-50 border border-slate-200 text-base sm:text-lg font-medium text-slate-900 leading-relaxed"
           >
             <span>{exercise.beforeBlank}</span>
             <span

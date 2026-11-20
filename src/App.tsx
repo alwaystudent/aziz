@@ -100,24 +100,24 @@ export default function App() {
 
               <section className="max-w-7xl mx-auto px-4 sm:px-6 pb-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-5 py-6 border-y border-slate-200/80 bg-white/60 rounded-2xl px-5">
-                  <div className="space-y-1">
-                    <h2 className="text-base font-display font-bold text-slate-900">
+                  <div className="space-y-1.5">
+                    <h2 className="text-base sm:text-lg font-display font-bold text-slate-900">
                       01. جميع السنوات من الثالثة إلى السادسة
                     </h2>
                     <p className="text-sm text-slate-600 leading-relaxed">
                       مسار متكامل يرافق التلميذ التونسي من السنة الثالثة إلى التحضير لمناظرة السادسة في مهمات خفيفة لا تسبب الملل.
                     </p>
                   </div>
-                  <div className="space-y-1">
-                    <h2 className="text-base font-display font-bold text-slate-900">
+                  <div className="space-y-1.5">
+                    <h2 className="text-base sm:text-lg font-display font-bold text-slate-900">
                       02. جرّب بيدك قبل أن تحفظ
                     </h2>
                     <p className="text-sm text-slate-600 leading-relaxed">
                       معداد المنازل، حالات المادة، الكسور الملوّنة، الدارة الكهربائية، وحاسبة النسبة المئوية تجعل الفهم فورياً.
                     </p>
                   </div>
-                  <div className="space-y-1">
-                    <h2 className="text-base font-display font-bold text-slate-900">
+                  <div className="space-y-1.5">
+                    <h2 className="text-base sm:text-lg font-display font-bold text-slate-900">
                       03. نظام نقاط وأوسمة افتراضية
                     </h2>
                     <p className="text-sm text-slate-600 leading-relaxed">

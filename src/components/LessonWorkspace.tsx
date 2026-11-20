@@ -106,17 +106,19 @@ export const LessonWorkspace: React.FC<LessonWorkspaceProps> = ({
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           <div className="lg:col-span-7 xl:col-span-8 bg-slate-50 border border-slate-200 rounded-2xl p-5 sm:p-6 space-y-4">
             <div>
-              <h2 className="text-lg font-display font-bold text-slate-900">
+              <h2 className="text-base sm:text-lg font-display font-bold text-slate-900">
                 {lesson.simTitle}
               </h2>
-              <p className="text-sm text-slate-600 mt-0.5">{lesson.simDescription}</p>
+              <p className="text-sm text-slate-600 mt-1 leading-relaxed">
+                {lesson.simDescription}
+              </p>
             </div>
             <SimulationStage simType={lesson.simType} />
           </div>
 
           <aside className="lg:col-span-5 xl:col-span-4 bg-white border border-slate-200 rounded-2xl p-5 space-y-5">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h2 className="text-base font-display font-bold text-slate-900">
+              <h2 className="text-base sm:text-lg font-display font-bold text-slate-900">
                 مهمات الاستكشاف السريعة
               </h2>
               <span className="text-xs font-mono text-slate-500 tabular-nums">

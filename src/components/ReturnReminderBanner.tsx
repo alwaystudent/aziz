@@ -64,8 +64,8 @@ export const ReturnReminderBanner: React.FC<ReturnReminderBannerProps> = ({
               </span>
             </div>
 
-            <h2 className="text-lg sm:text-xl font-display font-bold text-slate-900">
-              اشتقنا لك يا {studentName.trim() ? studentName : 'بطل'}! مكانك ما زال ينتظرك بحماس
+            <h2 className="text-xl sm:text-2xl font-display font-bold text-slate-900 leading-snug">
+              اشتقنا لك يا {studentName.trim() || 'عزيز'}! مكانك ما زال ينتظرك بحماس
             </h2>
 
             <p className="text-sm text-slate-600 leading-relaxed max-w-2xl">
@@ -79,7 +79,7 @@ export const ReturnReminderBanner: React.FC<ReturnReminderBannerProps> = ({
           <button
             type="button"
             onClick={onClaimAndStartExpress}
-            className="inline-flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-semibold text-white bg-amber-600 hover:bg-amber-700 rounded-xl transition-colors whitespace-nowrap shrink-0 cursor-pointer shadow-xs"
+            className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-amber-600 hover:bg-amber-700 rounded-xl transition-colors whitespace-nowrap shrink-0 cursor-pointer shadow-xs"
           >
             <Sparkles className="w-4 h-4" aria-hidden="true" />
             عدتُ بحماس! (+25 نقطة)
@@ -87,10 +87,10 @@ export const ReturnReminderBanner: React.FC<ReturnReminderBannerProps> = ({
           <button
             type="button"
             onClick={onClaimAndExploreLessons}
-            className="inline-flex items-center gap-1.5 px-4 py-2.5 text-xs sm:text-sm font-semibold text-slate-800 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 text-sm font-semibold text-slate-800 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl transition-colors whitespace-nowrap shrink-0 cursor-pointer"
           >
             افتح الدروس
-            <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" />
+            <ArrowLeft className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
       </div>

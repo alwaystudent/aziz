@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   Award,
   GraduationCap,
+  Edit3,
 } from 'lucide-react';
 import { BADGES, GRADES } from '../data/tunisianCurriculum';
 import { GradeLevel, LevelInfo, StudentProgress } from '../types/curriculum';
@@ -53,7 +54,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 }) => {
   const [heroImgFailed, setHeroImgFailed] = useState(false);
   const [mascotFailed, setMascotFailed] = useState(false);
-  const [draftName, setDraftName] = useState('');
+  const [editingName, setEditingName] = useState(false);
+  const [draftName, setDraftName] = useState(progress.studentName);
 
   const equippedBadge = BADGES.find((b) => b.id === progress.equippedBadgeId) ?? null;
   const activeGradeMeta = GRADES.find((g) => g.grade === selectedGrade) ?? GRADES[2];
@@ -72,7 +74,6 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
   return (
     <section className="max-w-7xl mx-auto px-4 sm:px-6 pt-7 pb-10 space-y-7">
-      {/* Gentle Return Reminder if absent > 2 days */}
       {showReturnReminder && (
         <ReturnReminderBanner
           studentName={progress.studentName}
@@ -83,22 +84,21 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
         />
       )}
 
-      {/* 2-Column Hero Split */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
         <div className="lg:col-span-6 flex flex-col justify-between space-y-6 py-1">
           <div className="space-y-4">
             <div className="text-xs font-semibold text-sky-700">
               منهج الجمهورية التونسية · السنوات من الثالثة إلى السادسة ابتدائي
             </div>
-            <h1 className="text-3xl sm:text-4xl lg:text-[2.6rem] font-display font-extrabold text-slate-900 leading-[1.2] text-balance">
+            <h1 className="text-3xl sm:text-4xl font-display font-extrabold text-slate-900 leading-[1.25] text-balance">
               افهم دروس الابتدائي بالتجربة واللعب، واجمع النقاط والأوسمة
             </h1>
-            <p className="text-base text-slate-600 leading-relaxed max-w-xl">
+            <p className="text-sm sm:text-base text-slate-600 leading-relaxed max-w-xl">
               مختبرات تفاعلية في الرياضيات والإيقاظ العلمي، وألعاب لغوية في العربية والفرنسية مصممة في مهمات قصيرة من 4 دقائق تمنحك نقاطاً فورية وأوسمة افتراضية مع كل إنجاز.
             </p>
 
             {/* Interactive Grade Switcher (3 to 6) */}
-            <div className="p-3 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2.5">
+            <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2.5">
               <div className="flex items-center justify-between gap-2 text-xs">
                 <span className="inline-flex items-center gap-1.5 font-semibold text-slate-800">
                   <GraduationCap className="w-4 h-4 text-sky-700" aria-hidden="true" />
@@ -147,7 +147,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             </div>
           </div>
 
-          {/* Adjacent Companion / Student Card + Equipped Badge */}
+          {/* Student Card + Equipped Badge */}
           <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3.5">
             <div className="flex items-center gap-4">
               <div className="w-14 h-14 rounded-xl bg-amber-50 border border-amber-200 overflow-hidden shrink-0 flex items-center justify-center">
@@ -163,19 +163,32 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                   <Compass className="w-6 h-6 text-amber-600" aria-hidden="true" />
                 )}
               </div>
-              <div className="min-w-0 flex-1 space-y-0.5">
+              <div className="min-w-0 flex-1 space-y-1">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="text-sm font-bold text-slate-900">
-                    {progress.studentName.trim()
-                      ? `مرحباً ${progress.studentName}`
-                      : 'مرحباً بك في بطاقة التلميذ'}{' '}
-                    · المستوى {levelInfo.level}: {levelInfo.title}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-display font-bold text-slate-900">
+                      مرحباً {progress.studentName || 'عزيز'} · المستوى {levelInfo.level}:{' '}
+                      {levelInfo.title}
+                    </span>
+                    {!editingName && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDraftName(progress.studentName);
+                          setEditingName(true);
+                        }}
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-sky-700 hover:text-sky-900 underline underline-offset-4 cursor-pointer"
+                      >
+                        <Edit3 className="w-3 h-3" aria-hidden="true" />
+                        تغيير الاسم
+                      </button>
+                    )}
                   </div>
                   <span className="font-mono text-xs font-bold text-amber-700 tabular-nums">
                     {progress.points} نقطة
                   </span>
                 </div>
-                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                <p className="text-sm text-slate-600 leading-relaxed">
                   {levelInfo.nextMinPoints !== null
                     ? `بقي ${levelInfo.nextMinPoints - progress.points} نقطة للوصول إلى المستوى ${
                         levelInfo.level + 1
@@ -186,13 +199,13 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               {equippedBadge && <BadgeMedallion badge={equippedBadge} unlocked size="sm" />}
             </div>
 
-            {!progress.studentName.trim() && (
+            {editingName && (
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
                   if (!draftName.trim()) return;
                   onSaveStudentName(draftName.trim());
-                  setDraftName('');
+                  setEditingName(false);
                 }}
                 className="flex flex-wrap items-center gap-2 pt-1"
               >
@@ -200,15 +213,22 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                   type="text"
                   value={draftName}
                   onChange={(e) => setDraftName(e.target.value)}
-                  placeholder="أدخل اسمك هنا ليظهر في بطاقة التلميذ..."
+                  placeholder="أدخل اسم التلميذ..."
                   aria-label="أدخل اسم التلميذ"
-                  className="flex-1 min-w-[180px] px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl bg-slate-50 focus:bg-white focus:outline-none focus:border-sky-500"
+                  className="flex-1 min-w-[160px] px-3 py-2 text-sm border border-slate-300 rounded-xl bg-slate-50 focus:bg-white focus:outline-none focus:border-sky-500"
                 />
                 <button
                   type="submit"
                   className="px-4 py-2 text-xs font-semibold text-white bg-sky-600 hover:bg-sky-700 rounded-xl transition-colors whitespace-nowrap cursor-pointer"
                 >
-                  حفظ الاسم
+                  حفظ
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditingName(false)}
+                  className="px-3 py-2 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors whitespace-nowrap cursor-pointer"
+                >
+                  إلغاء
                 </button>
               </form>
             )}
@@ -222,7 +242,6 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           </div>
         </div>
 
-        {/* Visual Frame with Measured Scrim Caption */}
         <div className="lg:col-span-6">
           <div className="relative h-full min-h-[300px] sm:min-h-[380px] rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 shadow-xs">
             {!heroImgFailed ? (
@@ -235,7 +254,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/85 via-slate-900/45 to-transparent p-5 sm:p-6 text-white">
-                  <div className="text-xs font-medium text-sky-200">
+                  <div className="text-xs font-semibold text-sky-200">
                     {activeGradeMeta.label} · 4 مواد أساسية
                   </div>
                   <div className="mt-1 text-base sm:text-lg font-display font-bold">
@@ -246,19 +265,23 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             ) : (
               <div className="w-full h-full flex flex-col items-center justify-center p-8 text-center bg-gradient-to-br from-sky-50 to-slate-100">
                 <BookOpen className="w-12 h-12 text-sky-600 mb-3" aria-hidden="true" />
-                <div className="font-display font-bold text-slate-800">منصة منارة الابتدائي</div>
-                <div className="text-sm text-slate-500 mt-1">تعلّم بالمحاكاة والألعاب التفاعلية</div>
+                <div className="text-lg font-display font-bold text-slate-800">
+                  منصة منارة التعلّم
+                </div>
+                <div className="text-sm text-slate-500 mt-1">
+                  تعلّم بالمحاكاة والألعاب التفاعلية
+                </div>
               </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* Full-width 4-Column Motivation & Progress KPI Strip */}
+      {/* 4-Column KPI Strip */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="card-interactive p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 flex items-center justify-between gap-3">
           <div>
-            <div className="text-xs font-medium text-slate-500">مجموع النقاط</div>
+            <div className="text-xs font-semibold text-slate-500">مجموع النقاط</div>
             <div className="mt-1 text-2xl font-mono font-bold text-slate-900 tabular-nums">
               {progress.points}
             </div>
@@ -274,7 +297,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           className="card-interactive p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 hover:border-amber-300 text-right flex items-center justify-between gap-3 cursor-pointer"
         >
           <div>
-            <div className="text-xs font-medium text-slate-500">الأوسمة الافتراضية</div>
+            <div className="text-xs font-semibold text-slate-500">الأوسمة الافتراضية</div>
             <div className="mt-1 text-2xl font-mono font-bold text-amber-700 tabular-nums">
               {earnedBadgesCount} / {BADGES.length}
             </div>
@@ -286,7 +309,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
         <div className="card-interactive p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 flex items-center justify-between gap-3">
           <div>
-            <div className="text-xs font-medium text-slate-500">
+            <div className="text-xs font-semibold text-slate-500">
               دروس {activeGradeMeta.shortLabel}
             </div>
             <div className="mt-1 text-2xl font-mono font-bold text-slate-900 tabular-nums">
@@ -300,7 +323,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
         <div className="card-interactive p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 flex items-center justify-between gap-3">
           <div>
-            <div className="text-xs font-medium text-slate-500">أيام المواظبة</div>
+            <div className="text-xs font-semibold text-slate-500">أيام المواظبة</div>
             <div className="mt-1 text-2xl font-mono font-bold text-slate-900 tabular-nums">
               {progress.streakDays} أيام
             </div>

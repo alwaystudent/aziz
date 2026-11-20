@@ -78,7 +78,7 @@ export const RewardToast: React.FC<RewardToastProps> = ({
                 <div className="text-xs font-bold text-slate-900 truncate">
                   {badge.title}
                 </div>
-                <div className="text-[11px] text-amber-800">
+                <div className="text-xs font-medium text-amber-800">
                   +{badge.bonusPoints} نقطة إضافية
                 </div>
               </div>

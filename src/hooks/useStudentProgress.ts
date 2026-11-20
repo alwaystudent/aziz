@@ -30,7 +30,7 @@ export function calculateDaysBetween(pastDateStr: string, currentDateStr: string
 const createInitialProgress = (): StudentProgress => {
   const threeDaysAgo = getDaysAgoKey(3);
   return {
-    studentName: '',
+    studentName: 'عزيز',
     selectedGrade: 5,
     schoolGovernorate: 'تونس',
     points: 115,
@@ -91,9 +91,11 @@ function normalizeProgress(raw: Partial<StudentProgress>): StudentProgress {
     : fallback.activityLog;
 
   const cleanName =
-    typeof raw.studentName === 'string' && raw.studentName.trim() !== 'ياسين بن علي'
+    typeof raw.studentName === 'string' &&
+    raw.studentName.trim() !== '' &&
+    raw.studentName.trim() !== 'ياسين بن علي'
       ? raw.studentName.trim()
-      : '';
+      : 'عزيز';
 
   return {
     ...fallback,

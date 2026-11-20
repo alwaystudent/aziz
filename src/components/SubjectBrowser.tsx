@@ -58,10 +58,10 @@ export const SubjectBrowser: React.FC<SubjectBrowserProps> = ({
       <div className="space-y-4 pb-5 border-b border-slate-200">
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
           <div className="space-y-1">
-            <h2 className="text-2xl sm:text-3xl font-display font-bold text-slate-900">
+            <h2 className="text-xl sm:text-2xl font-display font-bold text-slate-900">
               المواد الأساسية ودروس {activeGradeMeta.label}
             </h2>
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-slate-600 leading-relaxed">
               أكمل خطوات الاستكشاف (+15 نقطة للخطوة) والتمارين لفتح الأوسمة الافتراضية ({activeGradeMeta.subtitle}).
             </p>
           </div>
@@ -154,10 +154,10 @@ export const SubjectBrowser: React.FC<SubjectBrowserProps> = ({
                 <div className="text-xs font-semibold text-emerald-700">
                   الإيقاظ العلمي · مختبرات محاكاة بصرية
                 </div>
-                <h3 className="text-lg font-display font-bold text-slate-900">
+                <h3 className="text-base sm:text-lg font-display font-bold text-slate-900">
                   المادة، النبات، الكهرباء والقلب
                 </h3>
-                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                <p className="text-sm text-slate-600 leading-relaxed">
                   اكتشف حالات المادة في الثالثة، نمو النبتة في الرابعة، والدارة والقلب في الخامسة والسادسة لفتح «وسام عالم المختبر».
                 </p>
               </div>
@@ -192,10 +192,10 @@ export const SubjectBrowser: React.FC<SubjectBrowserProps> = ({
                 <div className="text-xs font-semibold text-sky-700">
                   الرياضيات · نماذج بصرية فورية
                 </div>
-                <h3 className="text-lg font-display font-bold text-slate-900">
+                <h3 className="text-base sm:text-lg font-display font-bold text-slate-900">
                   المعداد، الكسور، الهندسة والنسب المئوية
                 </h3>
-                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                <p className="text-sm text-slate-600 leading-relaxed">
                   من المعداد في الثالثة إلى المحيط والكسور ثم نسب التخفيض لمناظرة السادسة لفتح «وسام فارس الرياضيات».
                 </p>
               </div>
@@ -264,7 +264,7 @@ export const SubjectBrowser: React.FC<SubjectBrowserProps> = ({
                       </span>
                     </div>
 
-                    <h3 className="text-lg font-display font-bold text-slate-900 leading-snug">
+                    <h3 className="text-base sm:text-lg font-display font-bold text-slate-900 leading-snug">
                       {lesson.title}
                     </h3>
                     <p className="text-sm text-slate-600 leading-relaxed">{lesson.subtitle}</p>
